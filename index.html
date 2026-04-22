@@ -61,11 +61,14 @@
       <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-amber-500 z-20 -translate-x-1/2 rounded-full pointer-events-none shadow-[0_0_12px_rgba(245,158,11,0.3)]"></div>
 
       <!-- Scroll Track -->
-      <div x-ref="dial" @scroll="handleDialScroll($event)" class="flex items-center h-full overflow-x-auto no-scrollbar snap-x snap-mandatory px-[calc(50%-48px)]">
-        <template x-for="val in Array.from({length: 201}, (_, i) => i * 5)" :key="val">
+      <div x-ref="dial" 
+           @scroll="handleDialScroll($event)" 
+           x-effect="unit1; amount1 = 0; $nextTick(() => { if($refs.dial) $refs.dial.scrollLeft = 0; }); updateResult('from')"
+           class="flex items-center h-full overflow-x-auto no-scrollbar snap-x snap-mandatory px-[calc(50%-48px)]">
+        <template x-for="val in dialNumbers" :key="val">
           <div class="flex-shrink-0 w-24 h-full flex items-center justify-center snap-center transition-all duration-300 select-none"
             :class="amount1 === val ? 'text-6xl font-black opacity-100 text-amber-950' : 'text-xl opacity-20 text-amber-800'">
-            <span class="font-mono tracking-tighter" x-text="val"></span>
+            <span class="font-mono tracking-tighter" x-text="val.toFixed(unit1 === 'grams' || unit1 === 'ml' ? 0 : 2)"></span>
           </div>
         </template>
       </div>
@@ -262,10 +265,19 @@ function bakeConvert() {
       }
     },
 
+    get dialNumbers() {
+      const isWhole = this.unit1 === 'grams' || this.unit1 === 'ml';
+      const max = isWhole ? 2000 : 25;
+      const step = isWhole ? 5 : 0.1;
+      const length = Math.floor(max / step) + 1;
+      return Array.from({ length }, (_, i) => Number((i * step).toFixed(2)));
+    },
+
     handleDialScroll(e) {
-      const val = Math.round(e.target.scrollLeft / 96) * 5;
+      const index = Math.round(e.target.scrollLeft / 96);
+      const val = this.dialNumbers[index];
       
-      if (val !== this.amount1 && val >= 0 && val <= 1000) {
+      if (val !== undefined && val !== this.amount1) {
         this.amount1 = val;
         this.updateResult('from');
         if (navigator.vibrate) navigator.vibrate(5);
@@ -275,7 +287,10 @@ function bakeConvert() {
     syncDial() {
       this.$nextTick(() => {
         if (this.$refs.dial) {
-          this.$refs.dial.scrollLeft = (this.amount1 / 5) * 96;
+          const isWhole = this.unit1 === 'grams' || this.unit1 === 'ml';
+          const step = isWhole ? 5 : 0.1;
+          const index = Math.round(this.amount1 / step);
+          this.$refs.dial.scrollLeft = index * 96;
         }
       });
     }
