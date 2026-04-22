@@ -30,8 +30,8 @@
   }
 </style>
 </head>
-<body class="bg-[#fbfaf7] min-h-[100dvh] text-amber-950 pb-10">
-<div x-data="bakeConvert()" class="max-w-md mx-auto flex flex-col px-6 py-4 space-y-3">
+<body class="bg-[#fbfaf7] h-screen overflow-hidden text-amber-950">
+<div x-data="bakeConvert()" class="max-w-md mx-auto h-screen flex flex-col px-6 py-4 space-y-3">
   
   <!-- 1. HEADER -->
   <header class="text-left px-1">
@@ -51,24 +51,20 @@
 
   <!-- 3. THE INPUT BOX -->
   <div class="flex flex-col space-y-2">
-    <!-- Row 1: Odometer Lens Scrub-Dial -->
-    <div class="relative w-full h-28 bg-white rounded-3xl border border-amber-100 shadow-sm overflow-hidden">
+    <!-- Row 1: Odometer Lens Scrub-Dial Compartment -->
+    <div class="h-32 flex-none relative bg-white rounded-3xl border border-amber-100 shadow-sm overflow-hidden">
       <!-- Edge Masks -->
       <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
       <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
       
       <!-- Center Needle -->
-      <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-amber-500 z-20 -translate-x-1/2 rounded-full pointer-events-none shadow-[0_0_8px_rgba(245,158,11,0.4)]"></div>
+      <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-amber-500 z-20 -translate-x-1/2 rounded-full pointer-events-none shadow-[0_0_12px_rgba(245,158,11,0.3)]"></div>
 
-      <!-- Scroll Container -->
-      <div x-ref="dial" @scroll="handleDialScroll" class="flex items-center h-full overflow-x-auto no-scrollbar snap-x snap-mandatory px-[calc(50%-48px)]">
+      <!-- Scroll Track -->
+      <div x-ref="dial" @scroll="handleDialScroll($event)" class="flex items-center h-full overflow-x-auto no-scrollbar snap-x snap-mandatory px-[calc(50%-48px)]">
         <template x-for="val in Array.from({length: 201}, (_, i) => i * 5)" :key="val">
-          <div class="flex-shrink-0 w-24 h-full flex items-center justify-center snap-center transition-all duration-200 select-none"
-            :class="{
-              'text-6xl font-black opacity-100 text-amber-950 scale-110': amount1 === val,
-              'text-2xl font-medium opacity-40 text-amber-800': Math.abs(amount1 - val) === 5,
-              'text-sm font-normal opacity-10 text-amber-700': Math.abs(amount1 - val) > 5
-            }">
+          <div class="flex-shrink-0 w-24 h-full flex items-center justify-center snap-center transition-all duration-300 select-none"
+            :class="amount1 === val ? 'text-6xl font-black opacity-100 text-amber-950' : 'text-xl opacity-20 text-amber-800'">
             <span class="font-mono tracking-tighter" x-text="val"></span>
           </div>
         </template>
@@ -90,7 +86,7 @@
 
   <!-- 4. THE DIVIDER -->
   <div class="flex items-center justify-center gap-4 py-0">
-    <div class="text-amber-300 font-black text-xl tracking-tighter">↓</div>
+    <div class="text-amber-300 font-black text-xl">↓</div>
     <button @click="swapUnits()" class="w-8 h-8 flex items-center justify-center bg-white border border-amber-100 rounded-lg text-amber-800 shadow-sm pressable">
       ↔
     </button>
@@ -98,7 +94,7 @@
   </div>
 
   <!-- 5. THE RESULT BOX -->
-  <div class="bg-amber-900 rounded-[2.5rem] p-5 shadow-2xl flex flex-col items-center text-white space-y-4">
+  <div class="bg-amber-900 rounded-[2.5rem] p-5 shadow-2xl flex-1 flex flex-col items-center text-white space-y-4 overflow-hidden">
     <!-- Row 1: Scrolling Pills -->
     <div x-ref="unit2Container" class="flex overflow-x-auto gap-1 py-1 no-scrollbar w-full scroll-smooth px-4">
       <template x-for="u in units" :key="u">
@@ -112,7 +108,7 @@
     </div>
 
     <!-- Row 2: Result Text -->
-    <div class="flex flex-col items-center text-center w-full">
+    <div class="flex flex-col items-center justify-center text-center w-full flex-1">
       <div class="text-8xl font-black tracking-tighter settle leading-none" x-text="amount2 || '0'"></div>
       <div class="text-amber-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-2" x-text="unit2"></div>
     </div>
@@ -266,11 +262,8 @@ function bakeConvert() {
       }
     },
 
-    handleDialScroll() {
-      const el = this.$refs.dial;
-      if (!el) return;
-      const index = Math.round(el.scrollLeft / 96); // 96px is w-24
-      const val = index * 5;
+    handleDialScroll(e) {
+      const val = Math.round(e.target.scrollLeft / 96) * 5;
       
       if (val !== this.amount1 && val >= 0 && val <= 1000) {
         this.amount1 = val;
@@ -282,13 +275,11 @@ function bakeConvert() {
     syncDial() {
       this.$nextTick(() => {
         if (this.$refs.dial) {
-          const index = Math.round(this.amount1 / 5);
-          this.$refs.dial.scrollLeft = index * 96;
+          this.$refs.dial.scrollLeft = (this.amount1 / 5) * 96;
         }
       });
-      }
     }
-  }
+  };
 }
 </script>
 </body>
